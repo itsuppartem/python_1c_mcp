@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "python-1c-mcp"
 version = "0.1.0"
 description = "Read-only MCP server for 1C:Enterprise standard OData (8.3.5+)"
-readme = "README.md"
+readme = "README.pypi.md"
 license = "MIT"
 authors = [
     { name = "Artem Gulyaev", email = "itsuppartem@yandex.ru" },

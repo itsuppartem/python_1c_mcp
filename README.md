@@ -1,8 +1,17 @@
 # python-1c-mcp
 
+English | [Русский](README.ru.md)
+
+[![PyPI](https://img.shields.io/pypi/v/python-1c-mcp.svg)](https://pypi.org/project/python-1c-mcp/)
+[![Python versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](https://github.com/itsuppartem/python_1c_mcp)
+[![CI](https://github.com/itsuppartem/python_1c_mcp/actions/workflows/test.yml/badge.svg)](https://github.com/itsuppartem/python_1c_mcp/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Read-only [Model Context Protocol](https://modelcontextprotocol.io/) server for **1C:Enterprise standard OData** (`standard.odata`, platform **8.3.5+**).
 
 Built on [python-1c-odata](https://github.com/itsuppartem/python_1c_odata). Exposes schema discovery and OData queries to LLM agents in Claude Desktop, Cursor, and other MCP hosts.
+
+Homepage / repo: https://github.com/itsuppartem/python_1c_mcp
 
 ## Read-only scope
 
@@ -14,7 +23,7 @@ This server provides **read-only** access only:
 
 There are **no** create, update, delete, post, or unpost tools.
 
-**Honest limits:** standard OData 3.0 publication only. No 8.2, 7.7, SOAP, COM, or proprietary APIs.
+**Honest limits:** standard OData 3.0 publication only. No 8.2, 7.7, SOAP, COM, or proprietary APIs. Oldest publication is 8.3.5 Atom (`ONEC_FORMAT=atom` or `auto`). JSON is the default (`8.3.6+`).
 
 ## Install
 
@@ -22,13 +31,33 @@ There are **no** create, update, delete, post, or unpost tools.
 pip install python-1c-mcp
 ```
 
-Or from source:
+Python 3.10+. Depends on `python-1c-odata` 0.6.0+ and `mcp` 2.0+. From a clone:
 
 ```bash
 git clone https://github.com/itsuppartem/python_1c_mcp.git
 cd python_1c_mcp
 pip install -e ".[dev]"
 ```
+
+## Connect to 1C
+
+This server talks to a **published standard OData** interface on 1C:Enterprise **8.3.5+**. It does not open Designer, the thick/thin client, SOAP `/ws/`, custom HTTP services (`/hs/`), COM, 8.2, or 7.7. If OData is not published, there is no other way for this MCP to “log into 1C”.
+
+On the 1C side:
+
+1. Publish the infobase on the web server (Apache or IIS) from Designer: **Administration → Publish on web server**.
+2. Enable the standard OData interface for that publication (`enableStandardOData` / the OData checkbox). The service path is `/odata/standard.odata`.
+3. Create or pick a user who is allowed to use that publication (HTTP Basic). This is the web-service login, not an interactive Designer session.
+
+URL shape from the four variables:
+
+`{ONEC_SERVER}/{ONEC_INFOBASE}/odata/standard.odata`
+
+Example: `ONEC_SERVER=http://1c.example`, `ONEC_INFOBASE=trade` → `http://1c.example/trade/odata/standard.odata`.
+
+8.3.5 publications speak Atom only — set `ONEC_FORMAT=atom` (or `auto`). 8.3.6+ can use the default JSON.
+
+Auth is HTTP Basic: `ONEC_USER` / `ONEC_PASSWORD` (or `user:pass@` inside `ONEC_URL`). Then add the MCP JSON below in Cursor or Claude Desktop.
 
 ## Connection (environment variables)
 
@@ -40,7 +69,7 @@ pip install -e ".[dev]"
 | `ONEC_PASSWORD` | Yes* | OData password |
 | `ONEC_URL` | Alt. | Single URL: `http://user:pass@host/publication` (overrides the four vars above) |
 | `ONEC_FORMAT` | No | Response format: `json` (default), `atom`, or `auto` |
-| `ONEC_DEBUG` | No | If `true`, log HTTP requests to stderr |
+| `ONEC_DEBUG` | No | If `true` / `1` / `yes` / `on`, log HTTP requests to stderr |
 
 \* Either set `ONEC_URL` **or** all four of `ONEC_SERVER`, `ONEC_INFOBASE`, `ONEC_USER`, `ONEC_PASSWORD`.
 
@@ -84,13 +113,13 @@ Alternatively, use the console script:
 
 ## Tools
 
-| Tool | Description |
-|------|-------------|
-| `list_entity_sets` | All entity set names from `$metadata` |
-| `describe_entity_set` | Keys, properties, navigation for one set |
-| `odata_query` | Read-only collection query |
-| `get_entity` | Single record by `Ref_Key` GUID |
-| `get_metadata` | Metadata summary or truncated raw XML |
+| Tool | Parameters | Description |
+|------|------------|-------------|
+| `list_entity_sets` | — | All entity set names from `$metadata` (truncated after 500) |
+| `describe_entity_set` | `entity_set` | Keys, properties, navigation for one set (e.g. `Catalog_Товары`) |
+| `odata_query` | `entity_set`, `odata_filter`, `select`, `top`, `skip`, `orderby`, `inlinecount` | Read-only collection query. `top` default 20, max 100 |
+| `get_entity` | `entity_set`, `ref_key`, `select` | Single record by `Ref_Key` GUID |
+| `get_metadata` | `raw_xml` | Summary (count + sample names) or truncated raw `$metadata` XML |
 
 ## Resources
 
@@ -99,9 +128,18 @@ Alternatively, use the console script:
 | `1c://entity-sets` | Plain-text list of entity set names |
 | `1c://metadata` | `$metadata` XML (truncated if large) |
 
+## What is still missing
+
+| Missing | Notes |
+| --- | --- |
+| Write tools | no create / edit / delete / post / unpost — this package is read-only |
+| 8.2 / 7.7 / SOAP / COM / `/hs/` / OData 4 | out of scope. Oldest publication we speak is 8.3.5 Atom |
+
 ## Development
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate
 pip install -e ".[dev]"
 pytest
 ruff check src tests
