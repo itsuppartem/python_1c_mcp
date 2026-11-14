@@ -9,7 +9,7 @@ description = "Read-only MCP server for 1C:Enterprise standard OData (8.3.5+)"
 readme = "README.pypi.md"
 license = "MIT"
 authors = [
-    { name = "Artem Gulyaev", email = "itsuppartem@yandex.ru" },
+    { name = "Artem Gulyaev", email = "serbianartek@gmail.com" },
 ]
 requires-python = ">=3.10"
 dependencies = [
